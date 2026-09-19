@@ -146,6 +146,7 @@ sealed interface PreferencesKey {
         const val feedsTopBarTonalElevation = "feedsTopBarTonalElevation"
         const val feedsGroupListExpand = "feedsGroupListExpand"
         const val feedsGroupListTonalElevation = "feedsGroupListTonalElevation"
+        const val feedsHideStarredFilter = "feedsHideStarredFilter"
 
         // Flow page
         const val flowFilterBarStyle = "flowFilterBarStyle"
@@ -161,6 +162,12 @@ sealed interface PreferencesKey {
         const val flowArticleListTonalElevation = "flowArticleListTonalElevation"
         const val flowArticleListReadIndicator = "flowArticleListReadStatusIndicator"
         const val flowSortUnreadArticles = "flowArticleListSortUnreadArticles"
+        const val flowHideStarredFilter = "flowHideStarredFilter"
+        const val flowShowMarkAllAsReadButton = "flowShowMarkAllAsReadButton"
+        const val headingFontSize = "headingFontSize"
+        const val articleListTitleFontSize = "articleListTitleFontSize"
+        const val readingTitleFontSize = "readingTitleFontSize"
+        const val syncAtMinute = "syncAtMinute"
 
         // Reading page
         const val readingRenderer = "readingRender"
@@ -225,6 +232,7 @@ sealed interface PreferencesKey {
                 IntKey(feedsTopBarTonalElevation),
                 BooleanKey(feedsGroupListExpand),
                 IntKey(feedsGroupListTonalElevation),
+                BooleanKey(feedsHideStarredFilter),
                 // Flow page
                 IntKey(flowFilterBarStyle),
                 IntKey(flowFilterBarPadding),
@@ -239,6 +247,12 @@ sealed interface PreferencesKey {
                 IntKey(flowArticleListTonalElevation),
                 IntKey(flowArticleListReadIndicator),
                 BooleanKey(flowSortUnreadArticles),
+                BooleanKey(flowHideStarredFilter),
+                BooleanKey(flowShowMarkAllAsReadButton),
+                IntKey(headingFontSize),
+                IntKey(articleListTitleFontSize),
+                IntKey(readingTitleFontSize),
+                IntKey(syncAtMinute),
                 // Reading page
                 IntKey(readingRenderer),
                 BooleanKey(readingBoldCharacters),
@@ -308,6 +322,7 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
         const val feedsTopBarTonalElevation = "feedsTopBarTonalElevation"
         const val feedsGroupListExpand = "feedsGroupListExpand"
         const val feedsGroupListTonalElevation = "feedsGroupListTonalElevation"
+        const val feedsHideStarredFilter = "feedsHideStarredFilter"
 
         // Flow page
         const val flowFilterBarStyle = "flowFilterBarStyle"
@@ -323,6 +338,12 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
         const val flowArticleListTonalElevation = "flowArticleListTonalElevation"
         const val flowArticleListReadIndicator = "flowArticleListReadStatusIndicator"
         const val flowSortUnreadArticles = "flowArticleListSortUnreadArticles"
+        const val flowHideStarredFilter = "flowHideStarredFilter"
+        const val flowShowMarkAllAsReadButton = "flowShowMarkAllAsReadButton"
+        const val headingFontSize = "headingFontSize"
+        const val articleListTitleFontSize = "articleListTitleFontSize"
+        const val readingTitleFontSize = "readingTitleFontSize"
+        const val syncAtMinute = "syncAtMinute"
 
         // Reading page
         const val readingRenderer = "readingRender"
@@ -511,6 +532,13 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
                         String::class.java,
                     ),
                 sharedContent to DataStoreKey(intPreferencesKey(sharedContent), Int::class.java),
+                feedsHideStarredFilter to DataStoreKey(booleanPreferencesKey(feedsHideStarredFilter), Boolean::class.java),
+                flowHideStarredFilter to DataStoreKey(booleanPreferencesKey(flowHideStarredFilter), Boolean::class.java),
+                flowShowMarkAllAsReadButton to DataStoreKey(booleanPreferencesKey(flowShowMarkAllAsReadButton), Boolean::class.java),
+                headingFontSize to DataStoreKey(intPreferencesKey(headingFontSize), Int::class.java),
+                articleListTitleFontSize to DataStoreKey(intPreferencesKey(articleListTitleFontSize), Int::class.java),
+                readingTitleFontSize to DataStoreKey(intPreferencesKey(readingTitleFontSize), Int::class.java),
+                syncAtMinute to DataStoreKey(intPreferencesKey(syncAtMinute), Int::class.java),
                 // Languages
                 languages to DataStoreKey(intPreferencesKey(languages), Int::class.java),
             )

@@ -56,6 +56,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -74,6 +75,28 @@ import me.ash.reader.R
 import me.ash.reader.domain.data.PagerData
 import me.ash.reader.domain.model.article.ArticleFlowItem
 import me.ash.reader.domain.model.article.ArticleWithFeed
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
+import androidx.paging.LoadState
+import me.ash.reader.infrastructure.preference.LocalSyncInterval
+import me.ash.reader.infrastructure.preference.LocalSyncAtMinute
+import me.ash.reader.domain.service.SyncWorker
+import me.ash.reader.domain.model.general.MarkAsReadConditions
+import me.ash.reader.infrastructure.preference.LocalFlowHideStarredFilter
+import me.ash.reader.infrastructure.preference.LocalFlowShowMarkAllAsReadButton
+import me.ash.reader.infrastructure.preference.LocalHeadingFontSize
 import me.ash.reader.infrastructure.preference.LocalFlowArticleListDateStickyHeader
 import me.ash.reader.infrastructure.preference.LocalFlowArticleListFeedIcon
 import me.ash.reader.infrastructure.preference.LocalFlowArticleListTonalElevation
@@ -162,8 +185,20 @@ fun FlowPage(
 
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
-    var markAsRead by remember { mutableStateOf(false) }
     var onSearch by rememberSaveable { mutableStateOf(false) }
+    var showMarkAllConfirmDialog by remember { mutableStateOf(false) }
+
+    val hideStarred = LocalFlowHideStarredFilter.current.value
+    val showMarkAllAsReadButton = LocalFlowShowMarkAllAsReadButton.current.value
+    val headingFontSize = LocalHeadingFontSize.current.value.sp
+    val syncInterval = LocalSyncInterval.current
+    val syncAtMinute = LocalSyncAtMinute.current
+
+    LaunchedEffect(hideStarred) {
+        if (hideStarred && filterUiState.filter.isStarred()) {
+            viewModel.changeFilter(filterUiState.copy(filter = me.ash.reader.domain.model.general.Filter.Unread))
+        }
+    }
 
     var currentPullToLoadState: PullToLoadState? by remember { mutableStateOf(null) }
     var currentLoadAction: LoadAction? by remember { mutableStateOf(null) }
@@ -339,32 +374,28 @@ fun FlowPage(
                             val textStyle = LocalTextStyle.current
                             val color = LocalContentColor.current
                             if (textStyle.fontSize.value > 18f) {
+                                val alpha = (1f - topAppBarState.collapsedFraction * 1.5f).coerceIn(0f, 1f)
                                 BasicText(
                                     modifier =
-                                        Modifier.padding(
-                                            start = if (articleListFeedIcon.value) 34.dp else 8.dp,
-                                            end = 24.dp,
-                                        ),
+                                        Modifier.graphicsLayer { this.alpha = alpha }
+                                            .padding(
+                                                start = if (articleListFeedIcon.value) 34.dp else 8.dp,
+                                                end = 24.dp,
+                                            ),
                                     text = titleText,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
-                                    style = textStyle,
+                                    style = textStyle.copy(fontSize = headingFontSize),
                                     color = { color },
                                     autoSize =
                                         TextAutoSize.StepBased(
-                                            minFontSize = 28.sp,
-                                            maxFontSize = textStyle.fontSize,
+                                            minFontSize = if (headingFontSize.value < 20f) headingFontSize else 20.sp,
+                                            maxFontSize = headingFontSize,
                                         ),
-                                )
-                            } else {
-                                Text(
-                                    text = titleText,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
                                 )
                             }
                         },
-                        expandedHeight = 172.dp,
+                        expandedHeight = 108.dp,
                         scrollBehavior = scrollBehavior,
                         navigationIcon = {
                             FeedbackIconButton(
@@ -381,27 +412,9 @@ fun FlowPage(
                                 FeedbackIconButton(
                                     imageVector = Icons.Rounded.DoneAll,
                                     contentDescription = stringResource(R.string.mark_all_as_read),
-                                    tint =
-                                        if (markAsRead) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurface
-                                        },
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                 ) {
-                                    if (markAsRead) {
-                                        markAsRead = false
-                                    } else {
-                                        scope
-                                            .launch {
-                                                if (listState.firstVisibleItemIndex != 0) {
-                                                    listState.animateScrollToItem(0)
-                                                }
-                                            }
-                                            .invokeOnCompletion {
-                                                markAsRead = true
-                                                onSearch = false
-                                            }
-                                    }
+                                    showMarkAllConfirmDialog = true
                                 }
                             }
                             FeedbackIconButton(
@@ -426,7 +439,6 @@ fun FlowPage(
                                         .invokeOnCompletion {
                                             scope.launch {
                                                 onSearch = true
-                                                markAsRead = false
                                                 delay(100)
                                                 focusRequester.requestFocus()
                                             }
@@ -477,19 +489,37 @@ fun FlowPage(
                     )
                 }
 
-                RYExtensibleVisibility(markAsRead) {
-                    BackHandler(markAsRead) { markAsRead = false }
-
-                    MarkAsReadBar {
-                        markAsRead = false
-                        viewModel.updateReadStatus(
-                            groupId = filterUiState.group?.id,
-                            feedId = filterUiState.feed?.id,
-                            articleId = null,
-                            conditions = it,
-                            isUnread = false,
-                        )
-                    }
+                if (showMarkAllConfirmDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showMarkAllConfirmDialog = false },
+                        title = {
+                            Text(
+                                text = stringResource(R.string.mark_all_as_read_confirm),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showMarkAllConfirmDialog = false }) {
+                                Text(text = stringResource(R.string.no))
+                            }
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    showMarkAllConfirmDialog = false
+                                    viewModel.updateReadStatus(
+                                        groupId = filterUiState.group?.id,
+                                        feedId = filterUiState.feed?.id,
+                                        articleId = null,
+                                        conditions = MarkAsReadConditions.All,
+                                        isUnread = false,
+                                    )
+                                }
+                            ) {
+                                Text(text = stringResource(R.string.yes))
+                            }
+                        },
+                    )
                 }
                 val contentTransitionVertical =
                     sharedYAxisTransitionExpressive(direction = Direction.Forward)
@@ -521,6 +551,13 @@ fun FlowPage(
                     val pager = flowUiState.pagerData.pager
                     val filterState = flowUiState.pagerData.filterState
                     val pagingItems = pager.collectAsLazyPagingItems().also { pagingItems = it }
+
+                    var hasLoadedOnce by remember(filterState.filter) { mutableStateOf(false) }
+                    LaunchedEffect(pagingItems.loadState.refresh) {
+                        if (pagingItems.loadState.refresh !is LoadState.Loading) {
+                            hasLoadedOnce = true
+                        }
+                    }
 
                     if (markAsReadOnScroll && filterState.filter.isUnread()) {
                         LaunchedEffect(listState.isScrollInProgress) {
@@ -633,7 +670,8 @@ fun FlowPage(
                                 key = pager,
                                 onLoadNext = onLoadNext,
                                 onLoadPrevious = onPullToSync,
-                                loadThreshold = PullToLoadDefaults.loadThreshold(.1f),
+                                loadThreshold = PullToLoadDefaults.loadThreshold(.22f),
+                                requiredHoldDurationMs = 450L,
                             )
                             .also { currentPullToLoadState = it }
 
@@ -654,11 +692,7 @@ fun FlowPage(
                                                     .roundToPx()
                                             }
                                         },
-                                        onScroll = {
-                                            if (it < -10f) {
-                                                markAsRead = false
-                                            }
-                                        },
+
                                     )
                                     .nestedScroll(scrollBehavior.nestedScrollConnection)
                                     .fillMaxSize()
@@ -693,14 +727,58 @@ fun FlowPage(
                                 onMarkBelowAsRead = onMarkBelowAsRead,
                                 onShare = onShare,
                             )
-                            item {
-                                Spacer(modifier = Modifier.height(128.dp))
-                                Spacer(
-                                    modifier =
-                                        Modifier.windowInsetsBottomHeight(
-                                            WindowInsets.navigationBars
+                            if (filterUiState.filter.isUnread() && hasLoadedOnce && pagingItems.itemCount == 0) {
+                                item {
+                                    Box(
+                                        modifier =
+                                            Modifier
+                                                .fillParentMaxSize()
+                                                .padding(bottom = 72.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        EndOfInternetBanner(
+                                            syncIntervalMinutes = syncInterval.value,
+                                            syncAtMinute = syncAtMinute,
+                                            isSyncing = isSyncing,
                                         )
-                                )
+                                    }
+                                }
+                            } else {
+                                if (showMarkAllAsReadButton && filterUiState.filter.isUnread() && pagingItems.itemCount > 0) {
+                                    item {
+                                        Button(
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                                            onClick = {
+                                                viewModel.updateReadStatus(
+                                                    groupId = filterUiState.group?.id,
+                                                    feedId = filterUiState.feed?.id,
+                                                    articleId = null,
+                                                    conditions = MarkAsReadConditions.All,
+                                                    isUnread = false,
+                                                )
+                                            },
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.DoneAll,
+                                                contentDescription = null,
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(text = stringResource(R.string.mark_all_as_read))
+                                        }
+                                    }
+                                }
+                                item {
+                                    Spacer(modifier = Modifier.height(128.dp))
+                                    Spacer(
+                                        modifier =
+                                            Modifier.windowInsetsBottomHeight(
+                                                WindowInsets.navigationBars
+                                            )
+                                    )
+                                }
                             }
                         }
                     }
@@ -721,6 +799,7 @@ fun FlowPage(
                     filterBarFilled = true,
                     filterBarPadding = filterBarPadding.dp,
                     filterBarTonalElevation = filterBarTonalElevation.value.dp,
+                    hideStarred = hideStarred,
                 ) {
                     if (filterUiState.filter != it) {
                         viewModel.changeFilter(filterUiState.copy(filter = it))
@@ -745,6 +824,80 @@ fun FlowPage(
                             WindowInsets.safeContent.only(WindowInsetsSides.Horizontal)
                         ),
             )
+        }
+    }
+}
+
+@Composable
+fun EndOfInternetBanner(
+    syncIntervalMinutes: Long,
+    syncAtMinute: Int,
+    isSyncing: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    var remainingMillis by remember(syncIntervalMinutes, syncAtMinute) {
+        mutableStateOf(SyncWorker.calculateInitialDelayMillis(syncIntervalMinutes, syncAtMinute))
+    }
+
+    LaunchedEffect(syncIntervalMinutes, syncAtMinute) {
+        while (true) {
+            remainingMillis = SyncWorker.calculateInitialDelayMillis(syncIntervalMinutes, syncAtMinute)
+            delay(1000L)
+        }
+    }
+
+    val isDark = isSystemInDarkTheme()
+    val borderColor = Color(0xFF4CAF50)
+    val containerColor = if (isDark) Color(0xFF1B221B) else Color(0xFFF1F8F1)
+    val titleColor = if (isDark) MaterialTheme.colorScheme.onSurface else Color(0xFF1B5E20)
+    val subtitleColor = if (isDark) MaterialTheme.colorScheme.onSurfaceVariant else Color(0xFF2E7D32)
+
+    val subtitleText = when {
+        isSyncing -> stringResource(R.string.syncing)
+        syncIntervalMinutes <= 0L -> null
+        else -> {
+            val totalSeconds = (remainingMillis / 1000L).coerceAtLeast(0L)
+            val hours = totalSeconds / 3600L
+            val minutes = (totalSeconds % 3600L) / 60L
+            val seconds = totalSeconds % 60L
+            val timeString = if (hours > 0) {
+                String.format("%02d:%02d:%02d", hours, minutes, seconds)
+            } else {
+                String.format("%02d:%02d", minutes, seconds)
+            }
+            stringResource(R.string.next_automatic_refresh_in, timeString)
+        }
+    }
+
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 24.dp),
+        shape = RoundedCornerShape(8.dp),
+        color = containerColor,
+        border = BorderStroke(1.dp, borderColor),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = stringResource(R.string.end_of_the_internet),
+                style = MaterialTheme.typography.bodyLarge,
+                color = titleColor,
+                textAlign = TextAlign.Center,
+            )
+            if (subtitleText != null) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = subtitleText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = subtitleColor,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }

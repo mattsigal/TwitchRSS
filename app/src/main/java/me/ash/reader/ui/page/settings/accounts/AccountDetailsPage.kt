@@ -35,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,9 +47,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.work.WorkManager
 import java.util.Date
 import me.ash.reader.R
+import me.ash.reader.domain.service.SyncWorker
 import me.ash.reader.infrastructure.preference.KeepArchivedPreference
+import me.ash.reader.infrastructure.preference.LocalSyncAtMinute
+import me.ash.reader.infrastructure.preference.SyncAtMinutePreference
 import me.ash.reader.infrastructure.preference.SyncBlockListPreference
 import me.ash.reader.infrastructure.preference.SyncIntervalPreference
 import me.ash.reader.infrastructure.preference.not
@@ -96,6 +101,16 @@ fun AccountDetailsPage(
     }
     var blockListDialogVisible by remember { mutableStateOf(false) }
     var syncIntervalDialogVisible by remember { mutableStateOf(false) }
+    val syncAtMinute = LocalSyncAtMinute.current
+    val scope = rememberCoroutineScope()
+    var syncAtMinuteDialogVisible by remember { mutableStateOf(false) }
+    val syncIntervalMinutes = selectedAccount?.syncInterval?.value ?: 15L
+    val maxSyncMinutes = when {
+        syncIntervalMinutes <= 0L -> 0
+        syncIntervalMinutes < 60L -> syncIntervalMinutes.toInt()
+        else -> 60
+    }
+    val effectiveSyncAtMinute = if (maxSyncMinutes > 0) syncAtMinute % maxSyncMinutes else 0
     var keepArchivedDialogVisible by remember { mutableStateOf(false) }
     var exportOPMLModeDialogVisible by remember { mutableStateOf(false) }
 
@@ -183,6 +198,13 @@ fun AccountDetailsPage(
                         desc = selectedAccount?.syncInterval?.toDesc(context),
                         onClick = { syncIntervalDialogVisible = true },
                     ) {}
+                    if (selectedAccount?.syncInterval != null && selectedAccount.syncInterval != SyncIntervalPreference.Manually) {
+                        SettingItem(
+                            title = stringResource(R.string.sync_at),
+                            desc = ":%02d".format(effectiveSyncAtMinute),
+                            onClick = { syncAtMinuteDialogVisible = true },
+                        ) {}
+                    }
                     SettingItem(
                         title = stringResource(R.string.sync_once_on_start),
                         onClick = {
@@ -297,11 +319,53 @@ fun AccountDetailsPage(
                     text = it.toDesc(context),
                     selected = it == selectedAccount?.syncInterval,
                 ) {
-                    selectedAccount?.id?.let { accountId -> it.put(accountId, viewModel) }
+                    selectedAccount?.id?.let { accountId ->
+                        it.put(accountId, viewModel)
+                        if (it != SyncIntervalPreference.Manually) {
+                            val newMax = if (it.value < 60L) it.value.toInt() else 60
+                            val clampedSyncAt = if (newMax > 0) syncAtMinute % newMax else 0
+                            if (clampedSyncAt != syncAtMinute) {
+                                SyncAtMinutePreference(clampedSyncAt).put(context, scope)
+                            }
+                            SyncWorker.enqueuePeriodicWork(
+                                account = selectedAccount.copy(syncInterval = it),
+                                workManager = WorkManager.getInstance(context),
+                                syncAtMinute = clampedSyncAt,
+                            )
+                        } else {
+                            SyncWorker.cancelPeriodicWork(WorkManager.getInstance(context))
+                        }
+                    }
                 }
             },
     ) {
         syncIntervalDialogVisible = false
+    }
+
+    val syncAtOptions = (0 until maxSyncMinutes).map { minute ->
+        minute to ":%02d".format(minute)
+    }
+    RadioDialog(
+        visible = syncAtMinuteDialogVisible,
+        title = stringResource(R.string.sync_at),
+        options =
+            syncAtOptions.map { (minute, label) ->
+                RadioDialogOption(
+                    text = label,
+                    selected = minute == effectiveSyncAtMinute,
+                ) {
+                    SyncAtMinutePreference(minute).put(context, scope)
+                    selectedAccount?.let { acc ->
+                        SyncWorker.enqueuePeriodicWork(
+                            account = acc,
+                            workManager = WorkManager.getInstance(context),
+                            syncAtMinute = minute,
+                        )
+                    }
+                }
+            },
+    ) {
+        syncAtMinuteDialogVisible = false
     }
 
     RadioDialog(

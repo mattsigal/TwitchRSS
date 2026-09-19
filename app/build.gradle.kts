@@ -42,8 +42,8 @@ android {
         applicationId = "me.ash.twitchrss"
         minSdk = 26
         targetSdk = 34
-        versionCode = 48
-        versionName = "0.16.3"
+        versionCode = 49
+        versionName = "0.17.0"
 
         buildConfigField(
             "String",

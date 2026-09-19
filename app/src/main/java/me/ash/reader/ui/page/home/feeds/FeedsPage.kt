@@ -38,6 +38,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +67,7 @@ import me.ash.reader.infrastructure.preference.LocalFeedsFilterBarStyle
 import me.ash.reader.infrastructure.preference.LocalFeedsFilterBarTonalElevation
 import me.ash.reader.infrastructure.preference.LocalFeedsGroupListExpand
 import me.ash.reader.infrastructure.preference.LocalFeedsGroupListTonalElevation
+import me.ash.reader.infrastructure.preference.LocalFeedsHideStarredFilter
 import me.ash.reader.infrastructure.preference.LocalFeedsTopBarTonalElevation
 import me.ash.reader.infrastructure.preference.LocalNewVersionNumber
 import me.ash.reader.infrastructure.preference.LocalSkipVersionNumber
@@ -112,11 +114,18 @@ fun FeedsPage(
     val filterBarStyle = LocalFeedsFilterBarStyle.current
     val filterBarPadding = LocalFeedsFilterBarPadding.current
     val filterBarTonalElevation = LocalFeedsFilterBarTonalElevation.current
+    val hideStarred = LocalFeedsHideStarredFilter.current.value
 
     val accounts = accountViewModel.accounts.collectAsStateValue(initial = emptyList())
 
     val feedsUiState = feedsViewModel.feedsUiState.collectAsStateValue()
     val filterState = feedsViewModel.filterStateFlow.collectAsStateValue()
+
+    LaunchedEffect(hideStarred) {
+        if (hideStarred && filterState.filter.isStarred()) {
+            feedsViewModel.changeFilter(filterState.copy(filter = me.ash.reader.domain.model.general.Filter.Unread))
+        }
+    }
     val importantSum = feedsUiState.importantSum
     val groupWithFeedList = feedsViewModel.groupWithFeedsListFlow.collectAsStateValue()
     val groupsVisible: SnapshotStateMap<String, Boolean> = feedsUiState.groupsVisible
@@ -344,6 +353,7 @@ fun FeedsPage(
                 filterBarFilled = true,
                 filterBarPadding = filterBarPadding.dp,
                 filterBarTonalElevation = filterBarTonalElevation.value.dp,
+                hideStarred = hideStarred,
             ) {
                 feedsViewModel.changeFilter(filterState.copy(filter = it))
             }

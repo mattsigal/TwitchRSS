@@ -60,6 +60,7 @@ import me.ash.reader.R
 import me.ash.reader.domain.model.article.ArticleWithFeed
 import me.ash.reader.infrastructure.preference.FlowArticleListDescPreference
 import me.ash.reader.infrastructure.preference.FlowArticleReadIndicatorPreference
+import me.ash.reader.infrastructure.preference.LocalArticleListTitleFontSize
 import me.ash.reader.infrastructure.preference.LocalArticleListSwipeEndAction
 import me.ash.reader.infrastructure.preference.LocalArticleListSwipeStartAction
 import me.ash.reader.infrastructure.preference.LocalFlowArticleListDesc
@@ -228,6 +229,7 @@ fun ArticleItem(
             Column(modifier = Modifier.weight(1f)) {
 
                 // Title
+                val titleFontSize = LocalArticleListTitleFontSize.current.value
                 Row {
                     Text(
                         text = title,
@@ -235,7 +237,7 @@ fun ArticleItem(
                         style =
                             MaterialTheme.typography.titleMedium
                                 .applyTextDirection(title.requiresBidi())
-                                .merge(lineHeight = 22.sp),
+                                .merge(fontSize = titleFontSize.sp, lineHeight = (titleFontSize * 1.35f).sp),
                         maxLines =
                             if (articleListDesc != FlowArticleListDescPreference.NONE) 2 else 4,
                         overflow = TextOverflow.Ellipsis,
@@ -573,16 +575,10 @@ fun ArticleItemMenuContent(
     onShare: ((ArticleWithFeed) -> Unit)? = null,
     onItemClick: (() -> Unit)? = null,
 ) {
-    val starImageVector =
-        remember(isStarred) { if (isStarred) Icons.Outlined.StarOutline else Icons.Rounded.Star }
-
     val readImageVector =
         remember(isRead) {
             if (isRead) Icons.Outlined.FiberManualRecord else Icons.Rounded.FiberManualRecord
         }
-
-    val starText =
-        stringResource(if (isStarred) R.string.mark_as_unstar else R.string.mark_as_starred)
 
     val readText = stringResource(if (isRead) R.string.mark_as_unread else R.string.mark_as_read)
 
@@ -600,24 +596,7 @@ fun ArticleItemMenuContent(
             )
         },
     )
-    DropdownMenuItem(
-        text = { Text(text = starText) },
-        onClick = {
-            onToggleStarred(articleWithFeed)
-            onItemClick?.invoke()
-        },
-        leadingIcon = {
-            Icon(
-                imageVector = starImageVector,
-                contentDescription = null,
-                modifier = Modifier.size(iconSize),
-            )
-        },
-    )
 
-    if (onMarkAboveAsRead != null || onMarkBelowAsRead != null) {
-        HorizontalDivider()
-    }
     onMarkAboveAsRead?.let {
         DropdownMenuItem(
             text = { Text(text = stringResource(id = R.string.mark_above_as_read)) },
@@ -628,22 +607,6 @@ fun ArticleItemMenuContent(
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Rounded.ArrowUpward,
-                    contentDescription = null,
-                    modifier = Modifier.size(iconSize),
-                )
-            },
-        )
-    }
-    onMarkBelowAsRead?.let {
-        DropdownMenuItem(
-            text = { Text(text = stringResource(id = R.string.mark_below_as_read)) },
-            onClick = {
-                onMarkBelowAsRead(articleWithFeed)
-                onItemClick?.invoke()
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Rounded.ArrowDownward,
                     contentDescription = null,
                     modifier = Modifier.size(iconSize),
                 )

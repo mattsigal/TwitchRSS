@@ -82,5 +82,13 @@ data class Settings(
 
     // Languages
     val languages: LanguagesPreference = LanguagesPreference.default,
+
+    val feedsHideStarredFilter: FeedsHideStarredFilterPreference = FeedsHideStarredFilterPreference.default,
+    val flowHideStarredFilter: FlowHideStarredFilterPreference = FlowHideStarredFilterPreference.default,
+    val flowShowMarkAllAsReadButton: FlowShowMarkAllAsReadButtonPreference = FlowShowMarkAllAsReadButtonPreference.default,
+    val headingFontSize: HeadingFontSizePreference = HeadingFontSizePreference.default,
+    val articleListTitleFontSize: ArticleListTitleFontSizePreference = ArticleListTitleFontSizePreference.default,
+    val readingTitleFontSize: ReadingTitleFontSizePreference = ReadingTitleFontSizePreference.default,
+    val syncAtMinute: Int = SyncAtMinutePreference.default,
 )
 

@@ -13,6 +13,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyListState
@@ -33,10 +34,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import kotlin.math.abs
@@ -244,14 +247,39 @@ fun ReadingPage(
                                     ) {
                                         Content(
                                             modifier =
-                                                Modifier.pullToLoad(
-                                                    state = state,
-                                                    onScroll = { f ->
-                                                        if (abs(f) > 2f)
-                                                            isReaderScrollingDown = f < 0f
-                                                    },
-                                                    enabled = isPullToSwitchArticleEnabled,
-                                                ),
+                                                Modifier.pointerInput(
+                                                        isPullToSwitchArticleEnabled,
+                                                        isNextArticleAvailable,
+                                                        isPreviousArticleAvailable,
+                                                    ) {
+                                                        if (!isPullToSwitchArticleEnabled) return@pointerInput
+                                                        var totalDragX = 0f
+                                                        detectHorizontalDragGestures(
+                                                            onDragStart = { totalDragX = 0f },
+                                                            onHorizontalDrag = { change, dragAmount ->
+                                                                change.consume()
+                                                                totalDragX += dragAmount
+                                                            },
+                                                            onDragEnd = {
+                                                                val threshold = 72.dp.toPx()
+                                                                if (totalDragX < -threshold && isNextArticleAvailable) {
+                                                                    val (id, index) = readerState.nextArticle ?: return@detectHorizontalDragGestures
+                                                                    onLoadArticle(id, index)
+                                                                } else if (totalDragX > threshold && isPreviousArticleAvailable) {
+                                                                    val (id, index) = readerState.previousArticle ?: return@detectHorizontalDragGestures
+                                                                    onLoadArticle(id, index)
+                                                                }
+                                                            },
+                                                        )
+                                                    }
+                                                    .pullToLoad(
+                                                        state = state,
+                                                        onScroll = { f ->
+                                                            if (abs(f) > 2f)
+                                                                isReaderScrollingDown = f < 0f
+                                                        },
+                                                        enabled = isPullToSwitchArticleEnabled,
+                                                    ),
                                             contentPadding = paddings,
                                             content = content.text ?: "",
                                             feedName = feedName,

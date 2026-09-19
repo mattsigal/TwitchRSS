@@ -51,12 +51,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import me.ash.reader.R
+import me.ash.reader.infrastructure.preference.ArticleListTitleFontSizePreference
 import me.ash.reader.infrastructure.preference.BasicFontsPreference
 import me.ash.reader.infrastructure.preference.CustomPrimaryColorPreference
+import me.ash.reader.infrastructure.preference.HeadingFontSizePreference
+import me.ash.reader.infrastructure.preference.LocalArticleListTitleFontSize
 import me.ash.reader.infrastructure.preference.LocalBasicFonts
 import me.ash.reader.infrastructure.preference.LocalCustomPrimaryColor
 import me.ash.reader.infrastructure.preference.LocalDarkTheme
+import me.ash.reader.infrastructure.preference.LocalHeadingFontSize
+import me.ash.reader.infrastructure.preference.LocalReadingTitleFontSize
 import me.ash.reader.infrastructure.preference.LocalThemeIndex
+import me.ash.reader.infrastructure.preference.ReadingTitleFontSizePreference
 import me.ash.reader.infrastructure.preference.ThemeIndexPreference
 import me.ash.reader.infrastructure.preference.not
 import me.ash.reader.ui.component.base.BlockRadioButton
@@ -103,6 +109,14 @@ fun ColorAndStylePage(
     val wallpaperTonalPalettes = extractTonalPalettesFromUserWallpaper()
     var radioButtonSelected by remember { mutableStateOf(if (themeIndex > 4) 0 else 1) }
     var fontsDialogVisible by remember { mutableStateOf(false) }
+
+    val headingFontSize = LocalHeadingFontSize.current
+    val articleListTitleFontSize = LocalArticleListTitleFontSize.current
+    val readingTitleFontSize = LocalReadingTitleFontSize.current
+
+    var headingFontSizeDialogVisible by remember { mutableStateOf(false) }
+    var articleListTitleFontSizeDialogVisible by remember { mutableStateOf(false) }
+    var readingTitleFontSizeDialogVisible by remember { mutableStateOf(false) }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
@@ -208,6 +222,21 @@ fun ColorAndStylePage(
                         desc = fonts.toDesc(context),
                         onClick = { fontsDialogVisible = true },
                     ) {}
+                    SettingItem(
+                        title = stringResource(R.string.page_heading_size),
+                        desc = headingFontSize.label,
+                        onClick = { headingFontSizeDialogVisible = true },
+                    ) {}
+                    SettingItem(
+                        title = stringResource(R.string.article_list_title_size),
+                        desc = articleListTitleFontSize.label,
+                        onClick = { articleListTitleFontSizeDialogVisible = true },
+                    ) {}
+                    SettingItem(
+                        title = stringResource(R.string.reading_title_size),
+                        desc = readingTitleFontSize.label,
+                        onClick = { readingTitleFontSizeDialogVisible = true },
+                    ) {}
                     Spacer(modifier = Modifier.height(24.dp))
                 }
                 item {
@@ -254,6 +283,51 @@ fun ColorAndStylePage(
         }
     ) {
         fontsDialogVisible = false
+    }
+
+    RadioDialog(
+        visible = headingFontSizeDialogVisible,
+        title = stringResource(R.string.page_heading_size),
+        options = HeadingFontSizePreference.values.map {
+            RadioDialogOption(
+                text = it.label,
+                selected = it == headingFontSize,
+            ) {
+                it.put(context, scope)
+            }
+        }
+    ) {
+        headingFontSizeDialogVisible = false
+    }
+
+    RadioDialog(
+        visible = articleListTitleFontSizeDialogVisible,
+        title = stringResource(R.string.article_list_title_size),
+        options = ArticleListTitleFontSizePreference.values.map {
+            RadioDialogOption(
+                text = it.label,
+                selected = it == articleListTitleFontSize,
+            ) {
+                it.put(context, scope)
+            }
+        }
+    ) {
+        articleListTitleFontSizeDialogVisible = false
+    }
+
+    RadioDialog(
+        visible = readingTitleFontSizeDialogVisible,
+        title = stringResource(R.string.reading_title_size),
+        options = ReadingTitleFontSizePreference.values.map {
+            RadioDialogOption(
+                text = it.label,
+                selected = it == readingTitleFontSize,
+            ) {
+                it.put(context, scope)
+            }
+        }
+    ) {
+        readingTitleFontSizeDialogVisible = false
     }
 }
 

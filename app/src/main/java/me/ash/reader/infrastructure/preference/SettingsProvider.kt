@@ -140,6 +140,14 @@ class SettingsProvider @Inject constructor(
 
             // Languages
             LocalLanguages provides settings.languages,
+
+            LocalFeedsHideStarredFilter provides settings.feedsHideStarredFilter,
+            LocalFlowHideStarredFilter provides settings.flowHideStarredFilter,
+            LocalFlowShowMarkAllAsReadButton provides settings.flowShowMarkAllAsReadButton,
+            LocalHeadingFontSize provides settings.headingFontSize,
+            LocalArticleListTitleFontSize provides settings.articleListTitleFontSize,
+            LocalReadingTitleFontSize provides settings.readingTitleFontSize,
+            LocalSyncAtMinute provides settings.syncAtMinute,
         ) {
             content()
         }

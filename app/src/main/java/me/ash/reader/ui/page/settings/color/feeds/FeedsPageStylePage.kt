@@ -32,6 +32,7 @@ fun FeedsPageStylePage(
     val topBarTonalElevation = LocalFeedsTopBarTonalElevation.current
     val groupListExpand = LocalFeedsGroupListExpand.current
     val groupListTonalElevation = LocalFeedsGroupListTonalElevation.current
+    val hideStarredFilter = LocalFeedsHideStarredFilter.current
 
     val scope = rememberCoroutineScope()
 
@@ -158,6 +159,17 @@ fun FeedsPageStylePage(
                             filterBarTonalElevationDialogVisible = true
                         },
                     ) {}
+                    SettingItem(
+                        title = stringResource(R.string.hide_starred_filter),
+                        desc = "",
+                        onClick = {
+                            (!hideStarredFilter).put(context, scope)
+                        },
+                    ) {
+                        RYSwitch(activated = hideStarredFilter.value) {
+                            (!hideStarredFilter).put(context, scope)
+                        }
+                    }
                 }
                 item {
                     Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))

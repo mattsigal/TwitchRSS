@@ -16,9 +16,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import me.ash.reader.infrastructure.preference.LocalReadingFonts
 import me.ash.reader.infrastructure.preference.LocalReadingTitleAlign
 import me.ash.reader.infrastructure.preference.LocalReadingTitleBold
+import me.ash.reader.infrastructure.preference.LocalReadingTitleFontSize
 import me.ash.reader.infrastructure.preference.LocalReadingTitleUpperCase
 import me.ash.reader.ui.ext.formatAsString
 import me.ash.reader.ui.ext.requiresBidi
@@ -60,6 +62,7 @@ fun Metadata(
             textAlign = titleAlign,
         )
         Spacer(modifier = Modifier.height(4.dp))
+        val titleFontSize = LocalReadingTitleFontSize.current.value
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = if (titleUpperCase.value) titleUpperCaseString else title,
@@ -67,6 +70,8 @@ fun Metadata(
             style =
                 MaterialTheme.typography.headlineLarge
                     .merge(
+                        fontSize = titleFontSize.sp,
+                        lineHeight = (titleFontSize * 1.3f).sp,
                         fontFamily = fontFamily,
                         fontWeight = if (titleBold.value) FontWeight.Bold else FontWeight.Medium,
                     )

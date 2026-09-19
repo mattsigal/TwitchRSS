@@ -42,6 +42,8 @@ fun FlowPageStylePage(
 
     val settings = LocalSettings.current
     val pullToSwitchFeed = settings.pullToSwitchFeed
+    val hideStarredFilter = LocalFlowHideStarredFilter.current
+    val showMarkAllAsReadButton = LocalFlowShowMarkAllAsReadButton.current
 
     val scope = rememberCoroutineScope()
 
@@ -250,6 +252,28 @@ fun FlowPageStylePage(
                             filterBarTonalElevationDialogVisible = true
                         },
                     ) {}
+                    SettingItem(
+                        title = stringResource(R.string.hide_starred_filter),
+                        desc = "",
+                        onClick = {
+                            (!hideStarredFilter).put(context, scope)
+                        },
+                    ) {
+                        RYSwitch(activated = hideStarredFilter.value) {
+                            (!hideStarredFilter).put(context, scope)
+                        }
+                    }
+                    SettingItem(
+                        title = stringResource(R.string.show_mark_all_as_read_button),
+                        desc = "",
+                        onClick = {
+                            (!showMarkAllAsReadButton).put(context, scope)
+                        },
+                    ) {
+                        RYSwitch(activated = showMarkAllAsReadButton.value) {
+                            (!showMarkAllAsReadButton).put(context, scope)
+                        }
+                    }
                 }
                 item {
                     Spacer(modifier = Modifier.height(24.dp))

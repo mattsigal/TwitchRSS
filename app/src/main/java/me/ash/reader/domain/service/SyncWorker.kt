@@ -5,6 +5,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.*
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import me.ash.reader.domain.model.account.Account
 import me.ash.reader.infrastructure.rss.ReaderCacheHelper
@@ -89,7 +90,7 @@ constructor(
                 .enqueue()
         }
 
-        fun enqueuePeriodicWork(account: Account, workManager: WorkManager) {
+        fun enqueuePeriodicWork(account: Account, workManager: WorkManager, syncAtMinute: Int = 0) {
             val syncInterval = account.syncInterval
             val syncOnlyWhenCharging = account.syncOnlyWhenCharging
             val syncOnlyOnWiFi = account.syncOnlyOnWiFi
@@ -104,6 +105,8 @@ constructor(
                 if (workState == WorkInfo.State.ENQUEUED || workState == WorkInfo.State.RUNNING)
                     ExistingPeriodicWorkPolicy.UPDATE
                 else ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE
+
+            val initialDelayMillis = calculateInitialDelayMillis(syncInterval.value, syncAtMinute)
 
             workManager.enqueueUniquePeriodicWork(
                 SYNC_WORK_NAME_PERIODIC,
@@ -126,11 +129,38 @@ constructor(
                     .setInputData(workDataOf("accountId" to account.id))
                     .addTag(SYNC_TAG)
                     .addTag(PERIODIC_WORK_TAG)
-                    .setInitialDelay(syncInterval.value, TimeUnit.MINUTES)
+                    .setInitialDelay(initialDelayMillis, TimeUnit.MILLISECONDS)
                     .build(),
             )
 
             workManager.cancelUniqueWork(READER_WORK_NAME_PERIODIC)
+        }
+
+        fun calculateInitialDelayMillis(intervalMinutes: Long, targetMinute: Int): Long {
+            if (intervalMinutes <= 0L) return 0L
+            val now = Calendar.getInstance()
+            val currentMinute = now.get(Calendar.MINUTE)
+            val currentSecond = now.get(Calendar.SECOND)
+            val currentMillis = now.get(Calendar.MILLISECOND)
+
+            val secondsAndMillisPastMinute = currentSecond * 1000L + currentMillis
+
+            val delayMillis = if (intervalMinutes < 60L) {
+                val step = intervalMinutes.toInt()
+                val baseOffset = ((targetMinute % step) + step) % step
+                var minutesToAdd = baseOffset - (currentMinute % step)
+                if (minutesToAdd < 0 || (minutesToAdd == 0 && secondsAndMillisPastMinute > 0)) {
+                    minutesToAdd += step
+                }
+                minutesToAdd * 60_000L - secondsAndMillisPastMinute
+            } else {
+                var minutesToAdd = targetMinute - currentMinute
+                if (minutesToAdd < 0 || (minutesToAdd == 0 && secondsAndMillisPastMinute > 0)) {
+                    minutesToAdd += 60
+                }
+                minutesToAdd * 60_000L - secondsAndMillisPastMinute
+            }
+            return maxOf(0L, delayMillis)
         }
     }
 }

@@ -115,6 +115,7 @@ fun rememberPullToLoadState(
     onLoadPrevious: (() -> Unit)?,
     onLoadNext: (() -> Unit)?,
     loadThreshold: Dp = PullToLoadDefaults.loadThreshold(),
+    requiredHoldDurationMs: Long = 0L,
     snapAnimationSpec: AnimationSpec<Float> = spring(
         dampingRatio = Spring.DampingRatioLowBouncy,
         stiffness = Spring.StiffnessLow
@@ -138,6 +139,7 @@ fun rememberPullToLoadState(
             onLoadNext = onNext,
             snapAnimationSpec = snapAnimationSpec,
             threshold = thresholdPx,
+            requiredHoldDurationMs = requiredHoldDurationMs,
         )
     }
 
@@ -164,7 +166,8 @@ class PullToLoadState internal constructor(
     private val onLoadPrevious: State<(() -> Unit)?>,
     private val onLoadNext: State<(() -> Unit)?>,
     private val snapAnimationSpec: AnimationSpec<Float>,
-    threshold: Float
+    threshold: Float,
+    private val requiredHoldDurationMs: Long = 0L,
 ) {
     /**
      * A float representing how far the user has pulled as a percentage of the [threshold].
@@ -215,6 +218,7 @@ class PullToLoadState internal constructor(
     private var offsetPulled by mutableFloatStateOf(0f)
     private var _threshold by mutableFloatStateOf(threshold)
     var isSettled by mutableStateOf(false)
+    private var pulledDownStartTime = 0L
 
     internal fun onPull(pullDelta: Float): Float {
         isSettled = false
@@ -223,25 +227,35 @@ class PullToLoadState internal constructor(
         } else {
             pullDelta
         }
-        /*
-                Log.d(
-                    TAG,
-                    "onPull: currentOffset = $offsetPulled, pullDelta = $pullDelta, consumed = $consumed"
-                )*/
         offsetPulled += consumed
+        if (offsetPulled >= threshold) {
+            if (pulledDownStartTime == 0L) {
+                pulledDownStartTime = System.currentTimeMillis()
+            }
+        } else {
+            pulledDownStartTime = 0L
+        }
         return consumed
     }
 
     internal fun onPullBack(pullDelta: Float): Float {
-        return if (offsetPulled.signOpposites(pullDelta)) onPull(pullDelta) else 0f
+        val result = if (offsetPulled.signOpposites(pullDelta)) onPull(pullDelta) else 0f
+        if (offsetPulled < threshold) {
+            pulledDownStartTime = 0L
+        }
+        return result
     }
 
     internal fun onRelease(): Float {
-
         when (status) {
             Status.PulledDown -> {
-                onLoadPrevious.value?.let { it() } ?: animateDistanceTo(0f)
-
+                val heldDuration = if (pulledDownStartTime > 0L) System.currentTimeMillis() - pulledDownStartTime else 0L
+                pulledDownStartTime = 0L
+                if (requiredHoldDurationMs <= 0L || heldDuration >= requiredHoldDurationMs) {
+                    onLoadPrevious.value?.let { it() } ?: animateDistanceTo(0f)
+                } else {
+                    animateDistanceTo(0f)
+                }
             }
 
             Status.PulledUp -> {

@@ -155,10 +155,22 @@
     <string name="reading_page">Reading page</string>
     <string name="sponsor">Sponsor</string>
     <string name="open_source_licenses">Open source licenses</string>
-    <string name="github_link" translatable="false">https://github.com/ReadYouApp/ReadYou</string>
+    <string name="github_link" translatable="false">https://github.com/mattsigal/TwitchRSS</string>
     <string name="telegram_link" translatable="false">https://t.me/ReadYouApp</string>
-    <string name="wiki_link" translatable="false">https://github.com/ReadYouApp/ReadYou/wiki/Getting-Started</string>
-    <string name="update_link">https://api.github.com/repos/ReadYouApp/ReadYou/releases/latest</string>
+    <string name="wiki_link" translatable="false">https://github.com/mattsigal/TwitchRSS#readme</string>
+    <string name="update_link" translatable="false">https://api.github.com/repos/mattsigal/TwitchRSS/releases/latest</string>
+    <string name="hide_starred_filter">Hide Starred Filter</string>
+    <string name="show_mark_all_as_read_button">Show Mark All as Read button</string>
+    <string name="mark_all_as_read_confirm">Mark ALL articles as read?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="swipe_to_switch_article">Swipe to switch article</string>
+    <string name="swipe_to_switch_article_desc">Swipe left or right in reader to switch to next or previous article</string>
+    <string name="font_sizes">Font sizes</string>
+    <string name="page_heading_size">Page headings</string>
+    <string name="article_list_title_size">Article list titles</string>
+    <string name="reading_title_size">Reading article title</string>
+    <string name="sync_at">Sync at</string>
     <string name="change_log">Changelog</string>
     <string name="update">Update</string>
     <string name="skip_this_version">Skip this version</string>
@@ -320,7 +332,7 @@
     <string name="toggle_starred">Toggle starred</string>
     <string name="line_height_multiple">Line height multiple</string>
     <string name="export">Export</string>
-    <string name="pull_to_switch_article">Pull to switch article</string>
+    <string name="pull_to_switch_article">Swipe to switch article</string>
     <string name="mark_above_as_read">Mark above as read</string>
     <string name="mark_below_as_read">Mark below as read</string>
     <string name="save">Save</string>
@@ -332,7 +344,7 @@
     <string name="troubleshooting">Troubleshooting</string>
     <string name="troubleshooting_desc">Bug report, app preferences</string>
     <string name="bug_report">Bug report</string>
-    <string name="issue_tracer_url" translatable="false">https://github.com/ReadYouApp/ReadYou/issues</string>
+    <string name="issue_tracer_url" translatable="false">https://github.com/mattsigal/TwitchRSS/issues</string>
     <string name="app_preferences">App preferences</string>
     <string name="import_from_protobuf_file">Import from protobuf file</string>
     <string name="export_as_protobuf_file">Export as protobuf file</string>
@@ -386,4 +398,6 @@
     <string name="parse_full_content_desc">Fetch full articles from webpages</string>
     <string name="enable">Enable</string>
     <string name="disable">Disable</string>
+    <string name="end_of_the_internet">Congratulations! You\'ve reached the end of the internet!</string>
+    <string name="next_automatic_refresh_in">Next automatic refresh in %1$s...</string>
 </resources>

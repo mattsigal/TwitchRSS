@@ -36,6 +36,7 @@ fun FilterBar(
     filterBarFilled: Boolean,
     filterBarPadding: Dp,
     filterBarTonalElevation: Dp,
+    hideStarred: Boolean = false,
     filterOnClick: (Filter) -> Unit = {},
 ) {
     val view = LocalView.current
@@ -50,6 +51,8 @@ fun FilterBar(
         FlowFilterBarStylePreference.Icon.value -> 64.dp
         else -> 80.dp
     }
+
+    val filterItems = if (hideStarred) listOf(Filter.Unread, Filter.All) else Filter.values
 
     Surface(
         color = MaterialTheme.colorScheme.surfaceColorAtElevation(filterBarTonalElevation),
@@ -67,7 +70,7 @@ fun FilterBar(
         ) {
 
             Spacer(modifier = Modifier.width(filterBarPadding))
-            Filter.values.forEach { item ->
+            filterItems.forEach { item ->
                 NavigationBarItem(
                     modifier = Modifier.height(containerHeight),
                     alwaysShowLabel = when (filterBarStyle) {

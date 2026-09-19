@@ -89,5 +89,13 @@ fun Preferences.toSettings(): Settings {
 
         // Languages
         languages = LanguagesPreference.fromPreferences(this),
+
+        feedsHideStarredFilter = FeedsHideStarredFilterPreference.fromPreferences(this),
+        flowHideStarredFilter = FlowHideStarredFilterPreference.fromPreferences(this),
+        flowShowMarkAllAsReadButton = FlowShowMarkAllAsReadButtonPreference.fromPreferences(this),
+        headingFontSize = HeadingFontSizePreference.fromPreferences(this),
+        articleListTitleFontSize = ArticleListTitleFontSizePreference.fromPreferences(this),
+        readingTitleFontSize = ReadingTitleFontSizePreference.fromPreferences(this),
+        syncAtMinute = SyncAtMinutePreference.fromPreferences(this),
     )
 }
