@@ -39,16 +39,16 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "me.ash.reader"
+        applicationId = "me.ash.twitchrss"
         minSdk = 26
         targetSdk = 34
-        versionCode = 47
-        versionName = "0.16.2"
+        versionCode = 48
+        versionName = "0.16.3"
 
         buildConfigField(
             "String",
             "USER_AGENT_STRING",
-            "\"ReadYou/${versionName}(${versionCode})\"",
+            "\"TwitchRSS/${versionName}(${versionCode})\"",
         )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -95,7 +95,7 @@ android {
     applicationVariants.all {
         outputs.all {
             (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
-                "ReadYou-${defaultConfig.versionName}-${gitCommitHash}.apk"
+                "TwitchRSS-${defaultConfig.versionName}-${gitCommitHash}.apk"
         }
     }
     kotlinOptions {
