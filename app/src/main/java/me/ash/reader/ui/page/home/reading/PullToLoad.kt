@@ -221,6 +221,12 @@ class PullToLoadState internal constructor(
     private var pulledDownStartTime = 0L
 
     internal fun onPull(pullDelta: Float): Float {
+        if (pullDelta > 0f && offsetPulled >= 0f && onLoadPrevious.value == null) {
+            return 0f
+        }
+        if (pullDelta < 0f && offsetPulled <= 0f && onLoadNext.value == null) {
+            return 0f
+        }
         isSettled = false
         val consumed = if (offsetPulled.signOpposites(offsetPulled + pullDelta)) {
             -offsetPulled

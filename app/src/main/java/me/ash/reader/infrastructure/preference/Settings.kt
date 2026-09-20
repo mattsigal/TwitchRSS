@@ -90,5 +90,8 @@ data class Settings(
     val articleListTitleFontSize: ArticleListTitleFontSizePreference = ArticleListTitleFontSizePreference.default,
     val readingTitleFontSize: ReadingTitleFontSizePreference = ReadingTitleFontSizePreference.default,
     val syncAtMinute: Int = SyncAtMinutePreference.default,
+    val highlightSubreddits: Boolean = HighlightSubredditsPreference.default,
+    val highlightSubredditColor: String = HighlightSubredditColorPreference.default,
+    val customHighlightRules: List<HighlightRule> = CustomHighlightRulesPreference.default,
 )
 

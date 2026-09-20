@@ -40,6 +40,8 @@ sealed interface Route : NavKey {
 
     @Serializable data object FlowPageStyle : Route
 
+    @Serializable data object TitleHighlights : Route
+
     @Serializable data object ReadingPageStyle : Route
 
     @Serializable data object ReadingBoldCharacters : Route

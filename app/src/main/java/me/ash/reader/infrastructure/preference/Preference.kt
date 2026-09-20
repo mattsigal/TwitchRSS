@@ -97,5 +97,8 @@ fun Preferences.toSettings(): Settings {
         articleListTitleFontSize = ArticleListTitleFontSizePreference.fromPreferences(this),
         readingTitleFontSize = ReadingTitleFontSizePreference.fromPreferences(this),
         syncAtMinute = SyncAtMinutePreference.fromPreferences(this),
+        highlightSubreddits = HighlightSubredditsPreference.fromPreferences(this),
+        highlightSubredditColor = HighlightSubredditColorPreference.fromPreferences(this),
+        customHighlightRules = CustomHighlightRulesPreference.fromPreferences(this),
     )
 }

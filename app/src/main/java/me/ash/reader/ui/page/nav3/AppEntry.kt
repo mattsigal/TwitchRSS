@@ -230,11 +230,15 @@ fun AppEntry(backStack: NavBackStack<NavKey>) {
                                 navigateToReadingPageStyle = {
                                     backStack.add(Route.ReadingPageStyle)
                                 },
+                                navigateToTitleHighlights = {
+                                    backStack.add(Route.TitleHighlights)
+                                },
                             )
                         }
                     Route.DarkTheme -> NavEntry(key) { DarkThemePage(onBack = onBack) }
                     Route.FeedsPageStyle -> NavEntry(key) { FeedsPageStylePage(onBack = onBack) }
                     Route.FlowPageStyle -> NavEntry(key) { FlowPageStylePage(onBack = onBack) }
+                    Route.TitleHighlights -> NavEntry(key) { me.ash.reader.ui.page.settings.color.highlights.TitleHighlightsPage(onBack = onBack) }
                     Route.ReadingPageStyle ->
                         NavEntry(key) {
                             ReadingStylePage(

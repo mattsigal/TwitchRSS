@@ -148,6 +148,9 @@ class SettingsProvider @Inject constructor(
             LocalArticleListTitleFontSize provides settings.articleListTitleFontSize,
             LocalReadingTitleFontSize provides settings.readingTitleFontSize,
             LocalSyncAtMinute provides settings.syncAtMinute,
+            LocalHighlightSubreddits provides settings.highlightSubreddits,
+            LocalHighlightSubredditColor provides settings.highlightSubredditColor,
+            LocalCustomHighlightRules provides settings.customHighlightRules,
         ) {
             content()
         }

@@ -400,4 +400,19 @@
     <string name="disable">Disable</string>
     <string name="end_of_the_internet">Congratulations! You\'ve reached the end of the internet!</string>
     <string name="next_automatic_refresh_in">Next automatic refresh in %1$s...</string>
+    <string name="force_refresh">Force Refresh</string>
+    <string name="title_highlights">Title Highlights</string>
+    <string name="title_highlights_desc">Highlight subreddits and custom keywords in article titles</string>
+    <string name="highlight_subreddits">Highlight Subreddits</string>
+    <string name="highlight_subreddits_desc">Format /r/.../ subreddit prefixes with custom color</string>
+    <string name="subreddit_color">Subreddit Color</string>
+    <string name="custom_rules">Custom Rules</string>
+    <string name="add_rule">Add Rule</string>
+    <string name="keyword_or_pattern">Keyword or Pattern</string>
+    <string name="pattern_hint">e.g. [Skip], [SPC], Deals</string>
+    <string name="choose_color">Choose Color</string>
+    <string name="custom_hex">Custom Hex Color</string>
+    <string name="no_rules_yet">No custom highlight rules added yet</string>
+    <string name="delete_rule">Delete rule</string>
+    <string name="preview">Preview</string>
 </resources>

@@ -168,6 +168,9 @@ sealed interface PreferencesKey {
         const val articleListTitleFontSize = "articleListTitleFontSize"
         const val readingTitleFontSize = "readingTitleFontSize"
         const val syncAtMinute = "syncAtMinute"
+        const val highlightSubreddits = "highlightSubreddits"
+        const val highlightSubredditColor = "highlightSubredditColor"
+        const val customHighlightRules = "customHighlightRules"
 
         // Reading page
         const val readingRenderer = "readingRender"
@@ -253,6 +256,9 @@ sealed interface PreferencesKey {
                 IntKey(articleListTitleFontSize),
                 IntKey(readingTitleFontSize),
                 IntKey(syncAtMinute),
+                BooleanKey(highlightSubreddits),
+                StringKey(highlightSubredditColor),
+                StringKey(customHighlightRules),
                 // Reading page
                 IntKey(readingRenderer),
                 BooleanKey(readingBoldCharacters),
@@ -314,6 +320,9 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
         const val darkTheme = "darkTheme"
         const val amoledDarkTheme = "amoledDarkTheme"
         const val basicFonts = "basicFonts"
+        const val highlightSubreddits = "highlightSubreddits"
+        const val highlightSubredditColor = "highlightSubredditColor"
+        const val customHighlightRules = "customHighlightRules"
 
         // Feeds page
         const val feedsFilterBarStyle = "feedsFilterBarStyle"
@@ -539,6 +548,9 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
                 articleListTitleFontSize to DataStoreKey(intPreferencesKey(articleListTitleFontSize), Int::class.java),
                 readingTitleFontSize to DataStoreKey(intPreferencesKey(readingTitleFontSize), Int::class.java),
                 syncAtMinute to DataStoreKey(intPreferencesKey(syncAtMinute), Int::class.java),
+                highlightSubreddits to DataStoreKey(booleanPreferencesKey(highlightSubreddits), Boolean::class.java),
+                highlightSubredditColor to DataStoreKey(stringPreferencesKey(highlightSubredditColor), String::class.java),
+                customHighlightRules to DataStoreKey(stringPreferencesKey(customHighlightRules), String::class.java),
                 // Languages
                 languages to DataStoreKey(intPreferencesKey(languages), Int::class.java),
             )

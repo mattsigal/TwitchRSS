@@ -63,6 +63,10 @@ import me.ash.reader.infrastructure.preference.FlowArticleReadIndicatorPreferenc
 import me.ash.reader.infrastructure.preference.LocalArticleListTitleFontSize
 import me.ash.reader.infrastructure.preference.LocalArticleListSwipeEndAction
 import me.ash.reader.infrastructure.preference.LocalArticleListSwipeStartAction
+import me.ash.reader.infrastructure.preference.LocalHighlightSubreddits
+import me.ash.reader.infrastructure.preference.LocalHighlightSubredditColor
+import me.ash.reader.infrastructure.preference.LocalCustomHighlightRules
+import me.ash.reader.infrastructure.preference.highlightTitle
 import me.ash.reader.infrastructure.preference.LocalFlowArticleListDesc
 import me.ash.reader.infrastructure.preference.LocalFlowArticleListFeedIcon
 import me.ash.reader.infrastructure.preference.LocalFlowArticleListFeedName
@@ -133,6 +137,9 @@ fun ArticleItem(
     val articleListDesc = LocalFlowArticleListDesc.current
     val articleListDate = LocalFlowArticleListTime.current
     val articleListReadIndicator = LocalFlowArticleListReadIndicator.current
+    val highlightSubreddits = LocalHighlightSubreddits.current
+    val highlightSubredditColor = LocalHighlightSubredditColor.current
+    val customHighlightRules = LocalCustomHighlightRules.current
 
     Column(
         modifier =
@@ -230,9 +237,16 @@ fun ArticleItem(
 
                 // Title
                 val titleFontSize = LocalArticleListTitleFontSize.current.value
+                val annotatedTitle = remember(title, highlightSubreddits, highlightSubredditColor, customHighlightRules) {
+                    title.highlightTitle(
+                        highlightSubreddits = highlightSubreddits,
+                        subredditColorHex = highlightSubredditColor,
+                        customRules = customHighlightRules,
+                    )
+                }
                 Row {
                     Text(
-                        text = title,
+                        text = annotatedTitle,
                         color = MaterialTheme.colorScheme.onSurface,
                         style =
                             MaterialTheme.typography.titleMedium

@@ -22,6 +22,10 @@ import me.ash.reader.infrastructure.preference.LocalReadingTitleAlign
 import me.ash.reader.infrastructure.preference.LocalReadingTitleBold
 import me.ash.reader.infrastructure.preference.LocalReadingTitleFontSize
 import me.ash.reader.infrastructure.preference.LocalReadingTitleUpperCase
+import me.ash.reader.infrastructure.preference.LocalHighlightSubreddits
+import me.ash.reader.infrastructure.preference.LocalHighlightSubredditColor
+import me.ash.reader.infrastructure.preference.LocalCustomHighlightRules
+import me.ash.reader.infrastructure.preference.highlightTitle
 import me.ash.reader.ui.ext.formatAsString
 import me.ash.reader.ui.ext.requiresBidi
 import me.ash.reader.ui.theme.applyTextDirection
@@ -63,9 +67,20 @@ fun Metadata(
         )
         Spacer(modifier = Modifier.height(4.dp))
         val titleFontSize = LocalReadingTitleFontSize.current.value
+        val highlightSubreddits = LocalHighlightSubreddits.current
+        val highlightSubredditColor = LocalHighlightSubredditColor.current
+        val customRules = LocalCustomHighlightRules.current
+        val rawTitle = if (titleUpperCase.value) titleUpperCaseString else title
+        val annotatedTitle = remember(rawTitle, highlightSubreddits, highlightSubredditColor, customRules) {
+            rawTitle.highlightTitle(
+                highlightSubreddits = highlightSubreddits,
+                subredditColorHex = highlightSubredditColor,
+                customRules = customRules,
+            )
+        }
         Text(
             modifier = Modifier.fillMaxWidth(),
-            text = if (titleUpperCase.value) titleUpperCaseString else title,
+            text = annotatedTitle,
             color = MaterialTheme.colorScheme.onSurface,
             style =
                 MaterialTheme.typography.headlineLarge

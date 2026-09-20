@@ -34,7 +34,9 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.DoneAll
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.LargeTopAppBar
@@ -80,6 +82,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -340,6 +343,22 @@ fun FlowPage(
     }
 
     val isSyncing = viewModel.isSyncingFlow.collectAsStateValue()
+
+    LaunchedEffect(syncInterval.value, syncAtMinute) {
+        if (syncInterval.value <= 0L) return@LaunchedEffect
+        while (true) {
+            val delayMillis = SyncWorker.calculateInitialDelayMillis(syncInterval.value, syncAtMinute)
+            if (delayMillis > 0L) {
+                delay(delayMillis)
+            } else {
+                delay(1000L)
+            }
+            if (!isSyncing) {
+                viewModel.sync()
+            }
+            delay(5000L)
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         RYScaffold(
@@ -653,23 +672,11 @@ fun FlowPage(
                             else -> null
                         }
 
-                    val onPullToSync: (() -> Unit)? =
-                        if (isSyncing) null
-                        else {
-                            {
-                                viewModel.sync()
-                                currentPullToLoadState?.animateDistanceTo(
-                                    targetValue = 0f,
-                                    animationSpec = settleSpec,
-                                )
-                            }
-                        }
-
                     val pullToLoadState =
                         rememberPullToLoadState(
                                 key = pager,
                                 onLoadNext = onLoadNext,
-                                onLoadPrevious = onPullToSync,
+                                onLoadPrevious = null,
                                 loadThreshold = PullToLoadDefaults.loadThreshold(.22f),
                                 requiredHoldDurationMs = 450L,
                             )
@@ -736,11 +743,42 @@ fun FlowPage(
                                                 .padding(bottom = 72.dp),
                                         contentAlignment = Alignment.Center,
                                     ) {
-                                        EndOfInternetBanner(
-                                            syncIntervalMinutes = syncInterval.value,
-                                            syncAtMinute = syncAtMinute,
-                                            isSyncing = isSyncing,
-                                        )
+                                        Column(
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 24.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                        ) {
+                                            EndOfInternetBanner(
+                                                syncIntervalMinutes = syncInterval.value,
+                                                syncAtMinute = syncAtMinute,
+                                                isSyncing = isSyncing,
+                                                onAutoRefresh = { viewModel.sync() },
+                                            )
+                                            Spacer(modifier = Modifier.height(16.dp))
+                                            Button(
+                                                onClick = { viewModel.sync() },
+                                                enabled = !isSyncing,
+                                            ) {
+                                                if (isSyncing) {
+                                                    CircularProgressIndicator(
+                                                        modifier = Modifier.size(18.dp),
+                                                        strokeWidth = 2.dp,
+                                                        color = MaterialTheme.colorScheme.onPrimary,
+                                                    )
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(text = stringResource(R.string.syncing))
+                                                } else {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Refresh,
+                                                        contentDescription = null,
+                                                    )
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(text = stringResource(R.string.force_refresh))
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             } else {
@@ -814,7 +852,6 @@ fun FlowPage(
             },
         )
         currentPullToLoadState?.let {
-            PullToSyncIndicator(pullToLoadState = it, isSyncing = isSyncing)
             PullToLoadIndicator(
                 state = it,
                 loadAction = currentLoadAction,
@@ -834,15 +871,25 @@ fun EndOfInternetBanner(
     syncAtMinute: Int,
     isSyncing: Boolean,
     modifier: Modifier = Modifier,
+    onAutoRefresh: () -> Unit = {},
 ) {
     var remainingMillis by remember(syncIntervalMinutes, syncAtMinute) {
         mutableStateOf(SyncWorker.calculateInitialDelayMillis(syncIntervalMinutes, syncAtMinute))
     }
 
     LaunchedEffect(syncIntervalMinutes, syncAtMinute) {
+        var lastRemaining = SyncWorker.calculateInitialDelayMillis(syncIntervalMinutes, syncAtMinute)
+        remainingMillis = lastRemaining
         while (true) {
-            remainingMillis = SyncWorker.calculateInitialDelayMillis(syncIntervalMinutes, syncAtMinute)
             delay(1000L)
+            val currentRemaining = SyncWorker.calculateInitialDelayMillis(syncIntervalMinutes, syncAtMinute)
+            remainingMillis = currentRemaining
+            if ((lastRemaining in 1L..1500L && currentRemaining > lastRemaining) || currentRemaining <= 0L) {
+                if (!isSyncing) {
+                    onAutoRefresh()
+                }
+            }
+            lastRemaining = currentRemaining
         }
     }
 
@@ -870,9 +917,7 @@ fun EndOfInternetBanner(
     }
 
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 24.dp),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         color = containerColor,
         border = BorderStroke(1.dp, borderColor),

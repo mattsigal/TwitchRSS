@@ -97,6 +97,7 @@ fun ColorAndStylePage(
     navigateToFeedsPageStyle: () -> Unit,
     navigateToFlowPageStyle: () -> Unit,
     navigateToReadingPageStyle: () -> Unit,
+    navigateToTitleHighlights: () -> Unit,
 ) {
     val context = LocalContext.current
     val darkTheme = LocalDarkTheme.current
@@ -255,6 +256,11 @@ fun ColorAndStylePage(
                     SettingItem(
                         title = stringResource(R.string.reading_page),
                         onClick = navigateToReadingPageStyle,
+                    ) {}
+                    SettingItem(
+                        title = stringResource(R.string.title_highlights),
+                        desc = stringResource(R.string.title_highlights_desc),
+                        onClick = navigateToTitleHighlights,
                     ) {}
                 }
                 item {
