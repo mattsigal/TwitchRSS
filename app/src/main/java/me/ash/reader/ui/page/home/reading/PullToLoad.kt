@@ -90,7 +90,9 @@ private class ReaderNestedScrollConnection(
     }
 
     override suspend fun onPreFling(available: Velocity): Velocity {
-        onRelease()
+        if (enabled) {
+            onRelease()
+        }
         return Velocity.Zero
     }
 }

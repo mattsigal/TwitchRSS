@@ -179,20 +179,8 @@ fun ReadingPage(
                                 val state =
                                     rememberPullToLoadState(
                                         key = content,
-                                        onLoadNext =
-                                            if (isNextArticleAvailable) {
-                                                {
-                                                    val (id, index) = readerState.nextArticle
-                                                    onLoadArticle(id, index)
-                                                }
-                                            } else null,
-                                        onLoadPrevious =
-                                            if (isPreviousArticleAvailable) {
-                                                {
-                                                    val (id, index) = readerState.previousArticle
-                                                    onLoadArticle(id, index)
-                                                }
-                                            } else null,
+                                        onLoadNext = null,
+                                        onLoadPrevious = null,
                                     )
 
                                 val listState =
@@ -278,7 +266,7 @@ fun ReadingPage(
                                                             if (abs(f) > 2f)
                                                                 isReaderScrollingDown = f < 0f
                                                         },
-                                                        enabled = isPullToSwitchArticleEnabled,
+                                                        enabled = false,
                                                     ),
                                             contentPadding = paddings,
                                             content = content.text ?: "",
@@ -297,8 +285,8 @@ fun ReadingPage(
                                         )
                                         PullToLoadIndicator(
                                             state = state,
-                                            canLoadPrevious = isPreviousArticleAvailable,
-                                            canLoadNext = isNextArticleAvailable,
+                                            canLoadPrevious = false,
+                                            canLoadNext = false,
                                         )
                                     }
                                 }

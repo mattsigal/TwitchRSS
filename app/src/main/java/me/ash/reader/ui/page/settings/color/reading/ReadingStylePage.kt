@@ -206,6 +206,7 @@ fun ReadingStylePage(
 
                     SettingItem(
                         title = stringResource(id = R.string.pull_to_switch_article),
+                        desc = stringResource(id = R.string.swipe_to_switch_article_desc),
                         onClick = { pullToSwitchArticle.toggle(context, scope) }) {
                         RYSwitch(activated = pullToSwitchArticle.value, onClick = {
                             pullToSwitchArticle.toggle(context, scope)

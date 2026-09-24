@@ -193,6 +193,7 @@ fun InteractionPage(
                     )
                     SettingItem(
                         title = stringResource(id = R.string.pull_to_switch_article),
+                        desc = stringResource(id = R.string.swipe_to_switch_article_desc),
                         onClick = { pullToSwitchArticle.toggle(context, scope) }) {
                         RYSwitch(activated = pullToSwitchArticle.value) {
                             pullToSwitchArticle.toggle(context, scope)
