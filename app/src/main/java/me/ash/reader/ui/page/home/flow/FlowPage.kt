@@ -47,8 +47,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -56,6 +58,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.eventFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.graphicsLayer
@@ -343,6 +348,36 @@ fun FlowPage(
     }
 
     val isSyncing = viewModel.isSyncingFlow.collectAsStateValue()
+    val owner = LocalLifecycleOwner.current
+    var lastForegroundSyncTime by rememberSaveable { mutableLongStateOf(0L) }
+
+    DisposableEffect(owner) {
+        val job = scope.launch {
+            owner.lifecycle.eventFlow.collect { event ->
+                when (event) {
+                    Lifecycle.Event.ON_RESUME -> {
+                        viewModel.diffMapHolder.commitDiffsToDb()
+                        val now = System.currentTimeMillis()
+                        if (now - lastForegroundSyncTime > 60_000L) {
+                            lastForegroundSyncTime = now
+                            viewModel.sync()
+                        }
+                    }
+
+                    Lifecycle.Event.ON_PAUSE -> {
+                        viewModel.diffMapHolder.commitDiffsToDb()
+                    }
+
+                    else -> {
+                        /* no-op */
+                    }
+                }
+            }
+        }
+        onDispose {
+            job.cancel()
+        }
+    }
 
     LaunchedEffect(syncInterval.value, syncAtMinute) {
         if (syncInterval.value <= 0L) return@LaunchedEffect
@@ -526,13 +561,7 @@ fun FlowPage(
                             Button(
                                 onClick = {
                                     showMarkAllConfirmDialog = false
-                                    viewModel.updateReadStatus(
-                                        groupId = filterUiState.group?.id,
-                                        feedId = filterUiState.feed?.id,
-                                        articleId = null,
-                                        conditions = MarkAsReadConditions.All,
-                                        isUnread = false,
-                                    )
+                                    viewModel.markAllAsRead()
                                 }
                             ) {
                                 Text(text = stringResource(R.string.yes))

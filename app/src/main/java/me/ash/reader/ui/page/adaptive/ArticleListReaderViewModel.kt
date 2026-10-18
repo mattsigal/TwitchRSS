@@ -207,6 +207,14 @@ constructor(
                     .map { it.articleWithFeed }
 
             diffMapHolder.updateDiff(articleWithFeed = items.toTypedArray(), isUnread = false)
+            val filterState = filterStateUseCase.filterStateFlow.value
+            updateReadStatus(
+                groupId = filterState.group?.id,
+                feedId = filterState.feed?.id,
+                articleId = null,
+                conditions = MarkAsReadConditions.All,
+                isUnread = false,
+            )
         }
     }
 

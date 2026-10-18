@@ -50,6 +50,7 @@ import me.ash.reader.infrastructure.rss.provider.greader.GoogleReaderAPI.Compani
 import me.ash.reader.infrastructure.rss.provider.greader.GoogleReaderAPI.Companion.isValidItemId
 import me.ash.reader.infrastructure.rss.provider.greader.GoogleReaderAPI.Companion.ofCategoryIdToStreamId
 import me.ash.reader.infrastructure.rss.provider.greader.GoogleReaderAPI.Companion.ofCategoryStreamIdToId
+import me.ash.reader.infrastructure.rss.provider.greader.GoogleReaderAPI.Companion.ofFeedIdToStreamId
 import me.ash.reader.infrastructure.rss.provider.greader.GoogleReaderAPI.Companion.ofFeedStreamIdToId
 import me.ash.reader.infrastructure.rss.provider.greader.GoogleReaderAPI.Companion.remoteId
 import me.ash.reader.infrastructure.rss.provider.greader.GoogleReaderAPI.Companion.shortId
@@ -816,6 +817,32 @@ constructor(
                 }
             }
         super.markAsRead(groupId, feedId, articleId, before, isUnread)
+
+        // If marking all as read on the current stream/account, invoke Google Reader's atomic mark-all-as-read endpoint
+        if (articleId == null && !isUnread) {
+            val streamId =
+                when {
+                    groupId != null -> groupId.dollarLast().ofCategoryIdToStreamId()
+                    feedId != null -> feedId.dollarLast().ofFeedIdToStreamId()
+                    else -> GoogleReaderAPI.Stream.AllItems.tag
+                }
+            val ts = before?.let { it.time * 1000 }
+            val markAllResult =
+                runCatching {
+                    googleReaderAPI.markAllAsRead(streamId, ts)
+                }
+            if (markAllResult.isSuccess) {
+                Log.d("GoogleReaderRssService", "Server markAllAsRead succeeded for stream: $streamId")
+                return
+            } else {
+                Log.w(
+                    "GoogleReaderRssService",
+                    "Server markAllAsRead failed for stream: $streamId, falling back to chunked editTag",
+                    markAllResult.exceptionOrNull(),
+                )
+            }
+        }
+
         markList
             .takeIf { it.isNotEmpty() }
             ?.chunked(500)
