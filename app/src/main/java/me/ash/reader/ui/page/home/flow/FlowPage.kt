@@ -7,9 +7,15 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -45,6 +51,8 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -471,6 +479,39 @@ fun FlowPage(
                                     showMarkAllConfirmDialog = true
                                 }
                             }
+                            val infiniteTransition = rememberInfiniteTransition(label = "refresh_rotation")
+                            val rotationAngle by if (isSyncing) {
+                                infiniteTransition.animateFloat(
+                                    initialValue = 0f,
+                                    targetValue = 360f,
+                                    animationSpec = infiniteRepeatable(
+                                        animation = tween(1000, easing = LinearEasing),
+                                        repeatMode = RepeatMode.Restart,
+                                    ),
+                                    label = "refresh_angle",
+                                )
+                            } else {
+                                rememberUpdatedState(0f)
+                            }
+                            FeedbackIconButton(
+                                modifier = Modifier.graphicsLayer { rotationZ = rotationAngle },
+                                imageVector = Icons.Rounded.Refresh,
+                                contentDescription = stringResource(R.string.refresh_view),
+                                tint =
+                                    if (isSyncing) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    },
+                            ) {
+                                scope.launch {
+                                    if (listState.firstVisibleItemIndex != 0) {
+                                        listState.animateScrollToItem(0)
+                                    }
+                                }
+                                viewModel.sync()
+                                pagingItems?.refresh()
+                            }
                             FeedbackIconButton(
                                 imageVector = Icons.Rounded.Search,
                                 contentDescription = stringResource(R.string.search),
@@ -712,7 +753,17 @@ fun FlowPage(
                             .also { currentPullToLoadState = it }
 
                     Box(modifier = Modifier.fillMaxSize()) {
-                        LazyColumn(
+                        val syncingState = rememberPullToRefreshState()
+                        PullToRefreshBox(
+                            modifier = Modifier.fillMaxSize(),
+                            state = syncingState,
+                            isRefreshing = isSyncing,
+                            onRefresh = {
+                                viewModel.sync()
+                                pagingItems.refresh()
+                            },
+                        ) {
+                            LazyColumn(
                             modifier =
                                 Modifier.pullToLoad(
                                         state = pullToLoadState,
@@ -849,6 +900,7 @@ fun FlowPage(
                             }
                         }
                     }
+                }
                 }
             },
             floatingActionButtonPosition = FabPosition.Center,

@@ -20,10 +20,17 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.UnfoldLess
 import androidx.compose.material.icons.rounded.UnfoldMore
 import androidx.compose.material.rememberModalBottomSheetState
@@ -44,10 +51,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -217,6 +226,30 @@ fun FeedsPage(
                     }
                 },
                 actions = {
+                    val infiniteTransition = rememberInfiniteTransition(label = "feeds_refresh_rotation")
+                    val rotationAngle by if (isSyncing) {
+                        infiniteTransition.animateFloat(
+                            initialValue = 0f,
+                            targetValue = 360f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(1000, easing = LinearEasing),
+                                repeatMode = RepeatMode.Restart,
+                            ),
+                            label = "feeds_refresh_angle",
+                        )
+                    } else {
+                        rememberUpdatedState(0f)
+                    }
+
+                    FeedbackIconButton(
+                        modifier = Modifier.graphicsLayer { rotationZ = rotationAngle },
+                        imageVector = Icons.Rounded.Refresh,
+                        contentDescription = stringResource(R.string.refresh_view),
+                        tint = if (isSyncing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                    ) {
+                        doSync()
+                    }
+
                     if (subscribeViewModel.rssService.get().addSubscription) {
                         FeedbackIconButton(
                             imageVector = Icons.Rounded.Add,
