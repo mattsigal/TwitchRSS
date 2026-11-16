@@ -231,6 +231,7 @@ constructor(
             }
         }
         applicationScope.launch(ioDispatcher) {
+            diffMapHolder.flushPendingDiffs()
             val filterState = filterStateUseCase.filterStateFlow.value
             val service = rssService.get()
             when (service) {
@@ -325,6 +326,7 @@ constructor(
     }
 
     fun clearReadingData() {
+        diffMapHolder.commitDiffsToDb()
         _readingUiState.update { ReadingUiState() }
         _readerState.update { ReaderState() }
     }

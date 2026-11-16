@@ -13,7 +13,7 @@ import me.ash.reader.R
 /**
  * Each account will specify its local or third-party API type.
  */
-class AccountType(val id: Int) {
+data class AccountType(val id: Int) {
 
     /**
      * Make sure the constructed object is valid.
